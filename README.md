@@ -1,11 +1,12 @@
-# PoMA
-Poor Man's API
+# PoMA: Poor Man's API
 
 **PoMA** is a simple API that makes it possible to **set** and **get** variables from a running system. PoMA is implemented on top TCP sockets.
 
 It is motivated by the need to manage the configuration of dedicated devices (such as IoT devices) without using a local web server, i.e. a web servers running on the device. 
 
 PoMA is based on the idea of *Topics*. For every Topic the system can handle two different kind of operations: **get** and **set**. There is also another operation to **list** available Topics.
+
+Developers using PoMA are required to provide getter and the setter for each Topic.
 
 ## Operations
 
@@ -60,7 +61,9 @@ There are three operations.
 
 ## Implementation Details
 
-For each Topic the system holds a structure with a key (the name of the Topic), a pointer to a setter function and a pointer to a getter function. Setter and getter functions are provided by the system developers.  The list of Topics available in the system are implemented as a chained list of the struct Topic. 
+For each Topic the system holds a structure with a key (the name of the Topic), a pointer to a setter function and a pointer to a getter function. Setter and getter functions are provided by the system developers.  
+
+The list of Topics available in the system are implemented as a chained list of the struct Topic. 
 
 ``` c
 define <poma.h>
@@ -73,7 +76,6 @@ typedef struct Topic
     struct Topic *next;
 }
 Topic;
-
 ```
 The header **poma.h** provides functions that help on creating and chaining topics together
 
