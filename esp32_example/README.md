@@ -1,66 +1,55 @@
+# PoMA Esp32 Example 
+The example is based on the TCP Server example that is part of esp-idf v 4.1
 
-# TCP Server example
+The device connects to a given Access Point and  runs a TCP Server, i.e. a simple server that reads a socket. 
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
-
-The application creates a TCP socket with the specified port number and waits for a connection request from the client. After accepting a request from the client, connection between server and client is established and the application waits for some data to be received from the client. Received data are printed as ASCII text and retransmitted back to the client.
+The server has a simple PoMA's Topic chain.  Each received message is processed by calling the PoMA's message processing function.
+The server will keep calling PoMA functionality with every message that is longer that 1 character.
 
 ## How to use example
 
-In order to create TCP client that communicates with TCP server example, choose one of the following options.
+1.  Configure the Access Point to which the device will connect
 
-There are many host-side tools which can be used to interact with the UDP/TCP server/client. 
+2.  Build and flash the example using the tools provided by esp-idf 4.1
+
+3.  Create a TCP connection to the device (you have to know the IP and port number)
+There are many host-side tools which can be used to interact with the TCP server. 
 One command line tool is [netcat](http://netcat.sourceforge.net) which can send and receive many kinds of packets. 
-Note: please replace `192.168.0.167 3333` with desired IPV4/IPV6 address (displayed in monitor console) and port number in the following command.
 
-In addition to those tools, simple Python scripts can be found under sockets/scripts directory. Every script is designed to interact with one of the examples.
+There are three operations.
 
-### TCP client using netcat
-```
-nc 192.168.0.167 3333
-```
+1. **Get**: this operation takes one parameter (a topic ) and returns the value or status for a given topic. The get operator is the character **?** 
 
-### Python scripts
-Script example_test.py could be used as a counter part to the tcp-server application,
-IP address and the message to be send to the server shall be stated as arguments. Example:
+    ```
+    ? TOPICNAME
+    ```
+    Response
 
-```
-python example_test.py 192.168.0.167 Message
-```
-Note that this script is used in automated tests, as well, so the IDF test framework packages need to be imported;
-please add `$IDF_PATH/tools/ci/python_packages` to `PYTHONPATH`.
+    ```
+    ACK: SOMEVALUE
+    ```
+
+1. **Set**: this operation takes two parameters (a topic and a value) and sets the value to the given topic. The set operator is the character **=**
+
+    ```
+    = TOPICNAME VALUE
+    ```
+    
+    Response
+
+    ```
+    ACK: done
+    ```
+
+1. **List**: this operation takes no parameter and return a list of the available topics. The list  operator is the character **\***  
+    
+    Response
+
+    ```
+    ACK: TOPICNAME | TOPICNAME2 | TOPICNAME3 |
+    ```
 
 ## Hardware Required
 
 This example can be run on any commonly available ESP32 development board.
 
-## Configure the project
-
-```
-idf.py menuconfig
-```
-
-Set following parameters under Example Configuration Options:
-
-* Set `IP version` of the example to be IPV4 or IPV6.
-
-* Set `Port` number of the socket, that server example will create.
-
-Configure Wi-Fi or Ethernet under "Example Connection Configuration" menu. See "Establishing Wi-Fi or Ethernet Connection" section in [examples/protocols/README.md](../../README.md) for more details.
-
-## Build and Flash
-
-Build the project and flash it to the board, then run monitor tool to view serial output:
-
-```
-idf.py -p PORT flash monitor
-```
-
-(To exit the serial monitor, type ``Ctrl-]``.)
-
-See the Getting Started Guide for full steps to configure and use ESP-IDF to build projects.
-
-
-## Troubleshooting
-
-Start server first, to receive data sent from the client (application).
