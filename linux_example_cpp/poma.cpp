@@ -1,5 +1,8 @@
 #include "poma.hpp"
 
+
+
+
 void defaultSetter(int sockfd, char *argument)
 {
     char response[25];
@@ -21,7 +24,7 @@ void defaultGetter(int sockfd, char *argument)
  * public
  * *********************************************/
 
-poma::poma(){
+Poma::Poma(){
     fallback = new Topic ("");    
     if (fallback != NULL)
     {
@@ -29,9 +32,9 @@ poma::poma(){
         fallback->setter = &defaultSetter;
     }
 }
-poma::~poma() {}
+Poma::~Poma() {}
 
-int poma::processMessage(int newsockfd, char *buffer)
+int Poma::processMessage(int newsockfd, char *buffer)
 {
     int n;
     //    printf("Here is the message of %zu length: %s\n",strlen(buffer), buffer);
@@ -54,7 +57,7 @@ int poma::processMessage(int newsockfd, char *buffer)
 }
 
 
-void poma::registerTopic(char *newKey, ptr getter, ptr setter)
+void Poma::registerTopic(char *newKey, ptr getter, ptr setter)
 {
     
     addTopic(createTopic(newKey,  getter, setter) );
@@ -66,7 +69,7 @@ void poma::registerTopic(char *newKey, ptr getter, ptr setter)
  * *********************************************/
 
 
-Topic *poma::createTopic(char *newKey, ptr getter, ptr setter)
+Topic *Poma::createTopic(char *newKey, ptr getter, ptr setter)
 {
     Topic *newTopic;
     assert(strlen(newKey) < 21);
@@ -83,7 +86,7 @@ Topic *poma::createTopic(char *newKey, ptr getter, ptr setter)
 
 
 
-void poma::addTopic(Topic *new_topic)
+void Poma::addTopic(Topic *new_topic)
 {
     Topic *current = topics;
     if(current != NULL){
@@ -101,7 +104,7 @@ void poma::addTopic(Topic *new_topic)
 
 
 
-Topic *poma::findTopic(char *key)
+Topic *Poma::findTopic(char *key)
 {
     Topic *current = topics;
     // printf("topic: ->%s<- , key: ->%s<- ", current->key, key);
@@ -116,7 +119,7 @@ Topic *poma::findTopic(char *key)
 }
 
 
-void poma::processGetterMessage(int newsockfd, char *buffer)
+void Poma::processGetterMessage(int newsockfd, char *buffer)
 {
     //void (*getter)(int, char *);
     Topic *topic;
@@ -129,7 +132,7 @@ void poma::processGetterMessage(int newsockfd, char *buffer)
         topic->invokeGetter(newsockfd, buffer);
 }
 
-void poma::processSetterMessage(int newsockfd, char *buffer)
+void Poma::processSetterMessage(int newsockfd, char *buffer)
 {
     //void (*setter)(int, char *);
     Topic *topic;
@@ -145,7 +148,7 @@ void poma::processSetterMessage(int newsockfd, char *buffer)
         topic->invokeSetter(newsockfd, argument);
 }
 
-void poma::processListTopics(int sockfd, char *buffer)
+void Poma::processListTopics(int sockfd, char *buffer)
 {
     Topic *current = topics;
 
@@ -190,10 +193,90 @@ void Topic::invokeGetter(int newsockfd, char *buffer)
         getter(newsockfd, buffer);
 };
 
-Topic::Topic(char *aKey)
+Topic::Topic( char *aKey)
 {
 
-    strncpy (key,aKey, sizeof(key) );
+    strncpy ((char*)key,aKey, sizeof(key) );
     next = NULL;
 }
 Topic::~Topic() {}
+
+/* PomaSocketListener
+
+*/
+PomaSocketListener::PomaSocketListener(int sockfd, Poma *poma){
+
+board = poma;
+socket_desc = sockfd;
+
+}
+
+PomaSocketListener::PomaSocketListener( Poma *poma){
+
+board = poma;
+
+}
+
+
+PomaSocketListener::~PomaSocketListener(){}
+
+void PomaSocketListener::error(const char* msg)
+{
+    perror(msg);
+    exit(1);
+}
+
+void PomaSocketListener::start(int portno){
+int sockfd, newsockfd;
+    socklen_t clilen;
+    unsigned char status = 1;
+    char buffer[256];
+    struct sockaddr_in serv_addr, cli_addr;
+    int n;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+        error("ERROR opening socket");
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(portno);
+    if (bind(sockfd, (struct sockaddr *) &serv_addr,
+             sizeof(serv_addr)) < 0)
+        error("ERROR on binding");
+    listen(sockfd,5);
+    clilen = sizeof(cli_addr);
+    printf("Socket bound. Waiting on port %d... \n", portno);
+    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    if (newsockfd < 0)
+        error("ERROR on accept");
+    printf("Client Connected.\n");
+
+    while( status > 0 )
+    {
+        bzero(buffer,256);
+        n = read(newsockfd,buffer,255);
+        if (n < 0) error("ERROR reading from socket");
+                if (n < 0)
+        {
+            status = 0;
+            printf("status: %d \n", status);
+            error("ERROR writing to socket");
+        }
+        if (strlen(buffer) == 1 )
+        {
+            status = 0;
+            //printf("--status: %d \n", status);
+        }
+        else
+        {
+            //processMessage(newsockfd, buffer, topicHead);
+            board->processMessage(newsockfd, buffer);
+
+        }
+    }
+    close(newsockfd);
+
+}
+

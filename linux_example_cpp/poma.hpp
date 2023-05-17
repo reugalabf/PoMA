@@ -6,15 +6,23 @@
 
 #include <unistd.h>
 
+#include <sys/types.h>
+
+#include <netinet/in.h>
+
+
+
+
 #define HELP_MESSAGE "Available commands: ? (get), = (set), * (list) \n"
 
 typedef void (*ptr)(int, char*);
-//typedef ptr (pm)();
+
+
 
 class Topic
 {
 public:
-  Topic(char* k);
+  Topic( char* k);
   ~Topic();
   char key[20];
   ptr setter;
@@ -24,12 +32,10 @@ public:
   bool isMatching(char *candidate);
   void linkTopic(Topic *aTopic);
   void invokeSetter(int sockfd, char *message);
-  void invokeGetter(int sockfd, char *message);
-
-  
+  void invokeGetter(int sockfd, char *message);  
 };
 
-class poma
+class Poma
 {
 public:
   Topic *topics;
@@ -37,8 +43,8 @@ public:
   int processMessage(int newsockfd, char *buffer);
   void registerTopic(char *newKey, ptr getter,  ptr setter);
 
-  poma();
-  ~poma();
+  Poma();
+  ~Poma();
 
 private:
   void addTopic(Topic *new_topic);
@@ -47,4 +53,18 @@ private:
   void processGetterMessage(int newsockfd, char *buffer);
   void processSetterMessage(int newsockfd, char *buffer);
   void processListTopics(int sockfd, char *buffer);
+};
+
+class PomaSocketListener
+{
+public:
+PomaSocketListener(int sockfd, Poma *poma);
+PomaSocketListener(Poma *poma);
+~PomaSocketListener();
+void start(int port);
+void error(const char* msg);
+
+Poma *board;
+int socket_desc;
+
 };
