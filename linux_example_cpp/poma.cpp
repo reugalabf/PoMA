@@ -124,7 +124,7 @@ void Poma::processGetterMessage(int newsockfd, char *buffer)
     //void (*getter)(int, char *);
     Topic *topic;
     char *key;
-    char delims[3] = {' ', '\n', '\0'};
+    char delims[4] = {' ', '\r', '\n', '\0'};
 
     key = strtok(buffer, delims);
     topic = findTopic( key);
