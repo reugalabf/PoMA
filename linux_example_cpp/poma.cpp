@@ -124,7 +124,7 @@ void Poma::processGetterMessage(int newsockfd, char *buffer)
     //void (*getter)(int, char *);
     Topic *topic;
     char *key;
-    char delims[3] = {' ', '\n', '\0'};
+    char delims[4] = {' ', '\r', '\n', '\0'};
 
     key = strtok(buffer, delims);
     topic = findTopic( key);
@@ -226,6 +226,18 @@ void PomaSocketListener::error(const char* msg)
     exit(1);
 }
 
+size_t strlen_ignorechars(const char* str, const char* ignore_chars) {
+    if (!str || !ignore_chars) return 0;
+    size_t length = 0;
+    while (*str) {
+        if (!strchr(ignore_chars, *str)) {
+            length++;
+        }
+        str++;
+    }
+    return length;
+}
+
 void PomaSocketListener::start(int portno){
 int sockfd, newsockfd;
     socklen_t clilen;
@@ -264,7 +276,7 @@ int sockfd, newsockfd;
             printf("status: %d \n", status);
             error("ERROR writing to socket");
         }
-        if (strlen(buffer) == 1 )
+        if (strlen_ignorechars(buffer, " \r\n\t") == 0 )
         {
             status = 0;
             //printf("--status: %d \n", status);
