@@ -58,11 +58,11 @@ private:
 class PomaSocketListener
 {
 public:
-PomaSocketListener(int sockfd, Poma *poma);
 PomaSocketListener(Poma *poma);
 ~PomaSocketListener();
 void start(int port);
 void error(const char* msg);
+void stop();
 
 Poma *board;
 int socket_desc;

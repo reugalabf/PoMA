@@ -1,8 +1,5 @@
 #include "poma.hpp"
 
-
-
-
 void defaultSetter(int sockfd, char *argument)
 {
     char response[25];
@@ -32,7 +29,17 @@ Poma::Poma(){
         fallback->setter = &defaultSetter;
     }
 }
-Poma::~Poma() {}
+Poma::~Poma() {
+/* Topic *topics;
+  Topic *fallback;*/
+delete fallback;
+fallback = NULL;
+delete topic;
+topic = NULL;
+
+
+
+}
 
 int Poma::processMessage(int newsockfd, char *buffer)
 {
@@ -199,18 +206,28 @@ Topic::Topic( char *aKey)
     strncpy ((char*)key,aKey, sizeof(key) );
     next = NULL;
 }
-Topic::~Topic() {}
+Topic::~Topic() {
+/*
+    char key[20];
+    ptr setter;
+    ptr getter ;
+    Topic *next;
+  */
+    key = NULL
+    delete setter;
+    setter = NULL;
+    delete getter;
+    getter = NULL;
+    delete next;
+    next = NULLs;
+
+}
+
+
 
 /* PomaSocketListener
 
 */
-PomaSocketListener::PomaSocketListener(int sockfd, Poma *poma){
-
-board = poma;
-socket_desc = sockfd;
-
-}
-
 PomaSocketListener::PomaSocketListener( Poma *poma){
 
 board = poma;
@@ -225,6 +242,7 @@ void PomaSocketListener::error(const char* msg)
     perror(msg);
     exit(1);
 }
+
 
 void PomaSocketListener::start(int portno){
 int sockfd, newsockfd;
@@ -280,3 +298,4 @@ int sockfd, newsockfd;
 
 }
 
+void PomaSocketListener::stop(){}
