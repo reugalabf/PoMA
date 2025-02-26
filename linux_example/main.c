@@ -25,7 +25,8 @@ int GlobalVar=0;
 
 void setterGlobalVar(int sockfd, char *argument)
 {
-    GlobalVar = atoi(argument);
+    if(argument != NULL)
+        GlobalVar = atoi(argument);
     write(sockfd,"done\n",6);
 }
 
