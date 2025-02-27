@@ -1,4 +1,8 @@
 #include "poma.h"
+#include "esp_log.h"
+
+
+static const char *TAG = "PoMA";
 
 void defaultSetter(int sockfd, char *argument)
 {
@@ -16,7 +20,7 @@ void defaultGetter(int sockfd, char *argument)
 
 Topic *createTopic(char *newKey, void(*getter), void(*setter))
 {
-    Topic *newTopic;
+    static Topic *newTopic;
     assert(strlen(newKey) < 21);
     newTopic = malloc(sizeof(Topic));
     if (newTopic != NULL)
@@ -24,13 +28,15 @@ Topic *createTopic(char *newKey, void(*getter), void(*setter))
         strcpy(newTopic->key, newKey);
         newTopic->getter = getter;
         newTopic->setter = setter;
+        newTopic ->next = NULL;
     }
+    //ESP_LOGI(TAG, "createTopic: new key: %s", newTopic->key);
     return newTopic;
 }
 void addTopic(Topic *topics, Topic *new_topic)
 {
     Topic *current = topics;
-    while (current->next != NULL)
+        while (current->next != NULL)
     {
         current = current->next;
     }
@@ -40,11 +46,13 @@ void addTopic(Topic *topics, Topic *new_topic)
 void *findGetter(Topic *topics, char *key)
 {
     Topic *current = topics;
-    //   printf("topic: ->%s<- , key: ->%s<- ", current->key, key);
+    // printf("topic: ->%s<- , key: ->%s<- ", current->key, key);
+    //ESP_LOGI(TAG, "findGetter key: %s", key);
     if (key != NULL)
     {
         while (current != NULL)
-        {
+        {   
+            //ESP_LOGI(TAG, "findGetter current_key: %s", current->key);
             if (strcmp(key, current->key) == 0)
                 return current->getter;
             current = current->next;
@@ -57,6 +65,7 @@ void *findSetter(Topic *topics, char *key)
 {
     Topic *current = topics;
     // printf("topic: ->%s<- , key: ->%s<- ", current->key, key);
+
     if (key != NULL)
     {
         while (current != NULL)
