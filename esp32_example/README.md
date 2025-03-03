@@ -10,7 +10,7 @@ The server will keep calling PoMA functionality with every message that is longe
 
 1.  Configure the Access Point to which the device will connect
 
-2.  Build and flash the example using the tools provided by esp-idf 4.1
+2.  Build and flash the example using the tools provided by esp-idf 4.4+ (it was also tested with 5.4)
 
 3.  Create a TCP connection to the device (you have to know the IP and port number)
 There are many host-side tools which can be used to interact with the TCP server. 
