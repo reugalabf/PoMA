@@ -20,7 +20,7 @@ void defaultGetter(int sockfd, char *argument)
 
 Topic *createTopic(char *newKey, void(*getter), void(*setter))
 {
-    static Topic *newTopic;
+    Topic *newTopic;
     assert(strlen(newKey) < 21);
     newTopic = malloc(sizeof(Topic));
     if (newTopic != NULL)
