@@ -1,7 +1,8 @@
 /* A simple server in the internet domain using TCP
    The port number is passed as an argument */
 
-#include "poma.h"
+//#include "poma_core.h"
+#include "poma_connector.h"
 
 
 #include <stdio.h>
@@ -14,33 +15,34 @@
 #include <unistd.h>
 
 //#include "poma.h"
-
+/*
 void error(char *msg)
 {
     perror(msg);
     exit(1);
 }
+*/
 
 int GlobalVar=0;
 
-void setterGlobalVar(int sockfd, char *argument)
+void setterGlobalVar(WRITERFUNC, char *argument)
 {
     if(argument != NULL)
         GlobalVar = atoi(argument);
-    write(sockfd,"done\n",6);
+    writer("done\n",6);
 }
 
-void getterGlobalVar(int sockfd, char* argument)
+void getterGlobalVar(WRITERFUNC, char* argument)
 {
     char response[10];
     sprintf(response,"%d\n", GlobalVar);
-    write(sockfd,response,strlen(response));
+    writer(response,strlen(response));
 
 }
 
 int main(int argc, char *argv[])
 {
-    int sockfd, newsockfd, portno;
+    int sockfd, portno;
     socklen_t clilen;
     unsigned char status = 1;
     char buffer[256];
@@ -69,33 +71,11 @@ int main(int argc, char *argv[])
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
     printf("Socket bound. Waiting on port %d... \n", portno);
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-    if (newsockfd < 0)
+    poma_sockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    if (poma_sockfd < 0)
         error("ERROR on accept");
     printf("Client Connected.\n");
 
-    while( status > 0 )
-    {
-        bzero(buffer,256);
-        n = read(newsockfd,buffer,255);
-        if (n < 0) error("ERROR reading from socket");
-                if (n < 0)
-        {
-            status = 0;
-            printf("status: %d \n", status);
-            error("ERROR writing to socket");
-        }
-        if (strlen(buffer) == 1 )
-        {
-            status = 0;
-            //printf("--status: %d \n", status);
-        }
-        else
-        {
-            processMessage(newsockfd, buffer, topicHead);
-
-        }
-    }
-    close(newsockfd);
+    processMessagesLoop(topicHead);
     return 0;
 }
