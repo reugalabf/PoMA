@@ -18,31 +18,6 @@ int  tcpwriter(const void * response, size_t rsp_size)
     return 1;
 }
 
-//int processMessage(WRITERFUNC, char * buffer, Topic* topics);
-/*
-int processMessage(WRITERFUNC, char *buffer, Topic *topics)
-{
-    int n;
-    //    printf("Here is the message of %zu length: %s\n",strlen(buffer), buffer);
-    n = writer( "ACK: ", strlen("ACK: "));
-    switch (buffer[0])
-    {
-    case '?':
-        processGetterMessage(writer, &buffer[1], topics);
-        break;
-    case '=':
-        processSetterMessage(writer, &buffer[1], topics);
-        break;
-    case '*':
-        processListTopics( writer, &buffer[1], topics);
-        break;
-    default:
-        writer( AVAILABLE_COMMANDS, strlen(AVAILABLE_COMMANDS));
-    }
-    return n;
-}
-*/
-
 void processMessagesLoop(Topic *topicsHead){
 unsigned char status=1;
 ssize_t n;

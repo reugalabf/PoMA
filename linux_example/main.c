@@ -1,8 +1,7 @@
 /* A simple server in the internet domain using TCP
    The port number is passed as an argument */
 
-//#include "poma_core.h"
-#include "poma_connector.h"
+#include "poma_tcpconnector.h"
 
 
 #include <stdio.h>
@@ -13,15 +12,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-
-//#include "poma.h"
-/*
-void error(char *msg)
-{
-    perror(msg);
-    exit(1);
-}
-*/
 
 int GlobalVar=0;
 
