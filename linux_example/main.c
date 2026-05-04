@@ -34,10 +34,10 @@ int main(int argc, char *argv[])
 {
     int sockfd, portno;
     socklen_t clilen;
-    unsigned char status = 1;
-    char buffer[256];
+    //unsigned char status = 1;
+    //char buffer[256];
     struct sockaddr_in serv_addr, cli_addr;
-    int n;
+    //int n;
     Topic *topicHead;
     topicHead = createTopic("GlobalVar", getterGlobalVar, setterGlobalVar);
     addTopic(topicHead, createTopic("g_var", getterGlobalVar, setterGlobalVar));
