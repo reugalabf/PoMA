@@ -32,12 +32,12 @@ void getterGlobalVar(WRITERFUNC, char* argument)
 
 int main(int argc, char *argv[])
 {
-    int sockfd, portno;
-    socklen_t clilen;
-    //unsigned char status = 1;
-    //char buffer[256];
-    struct sockaddr_in serv_addr, cli_addr;
-    //int n;
+    //int sockfd, portno;
+    //socklen_t clilen;
+    
+    //struct sockaddr_in serv_addr, cli_addr;
+    PoMA_TCP_SPEC* tcpSpec = malloc(sizeof(PoMA_TCP_SPEC));
+
     Topic *topicHead;
     topicHead = createTopic("GlobalVar", getterGlobalVar, setterGlobalVar);
     addTopic(topicHead, createTopic("g_var", getterGlobalVar, setterGlobalVar));
@@ -47,25 +47,10 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ERROR, no port provided\n");
         exit(1);
     }
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = atoi(argv[1]);
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
-    if (bind(sockfd, (struct sockaddr *) &serv_addr,
-             sizeof(serv_addr)) < 0)
-        error("ERROR on binding");
-    listen(sockfd,5);
-    clilen = sizeof(cli_addr);
-    printf("Socket bound. Waiting on port %d... \n", portno);
-    poma_sockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-    if (poma_sockfd < 0)
-        error("ERROR on accept");
-    printf("Client Connected.\n");
+    
 
-    processMessagesLoop(topicHead);
+    tcpSpec = createPoMATCPConnectSpec(tcpSpec, atoi(argv[1]) , 0 );
+    tcpSpec->processClientsLoop(tcpSpec  ,topicHead);
+    
     return 0;
 }
