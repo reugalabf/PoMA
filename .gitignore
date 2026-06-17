@@ -1,0 +1,14 @@
+# Ignore all log files
+*.log
+
+# Ignore all compiled Python files
+*.pyc
+
+# Ignore all temporary text documents
+*.tmp
+
+# Ignore .o files
+*.o
+
+.vscode/
+
