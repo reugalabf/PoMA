@@ -1,29 +1,35 @@
-#poma_example: main.c poma.c poma.h
-#	gcc -o poma_example main.c poma_core.c -I.
-
-
 CC = gcc
 CFLAGS = -Wall -Wextra -I.
 
 TARGET = poma_example
-OBJ = main.o poma_tcpconnector.o poma_core.o
+BUILD_DIR = build
+
+OBJ = \
+	$(BUILD_DIR)/main.o \
+	$(BUILD_DIR)/poma_tcpconnector.o \
+	$(BUILD_DIR)/poma_core.o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
-# Explicit header dependencies
-# This ensures that if a header changes, the dependent .c file is recompiled
-main.o: main.c poma_tcpconnector.h
-poma_tcpconnector.o: poma_tcpconnector.c poma_core.h poma_core.h
-poma_core.o: poma_core.c poma_core.h
+# Create build directory if it doesn't exist
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-# Generic rule for compilation
-%.o: %.c
+# Explicit header dependencies
+$(BUILD_DIR)/main.o: main.c poma_tcpconnector.h | $(BUILD_DIR)
+
+$(BUILD_DIR)/poma_tcpconnector.o: poma_tcpconnector.c poma_tcpconnector.h poma_core.h | $(BUILD_DIR)
+
+$(BUILD_DIR)/poma_core.o: poma_core.c poma_core.h | $(BUILD_DIR)
+
+# Generic rule for compilation into build directory
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET)
 
 .PHONY: all clean
