@@ -9,13 +9,13 @@
 
 static int ref_sockfd=-1;
 
-void error(char *msg)
+static void error(char *msg)
 {
     perror(msg);
     exit(1);
 }
 
-int tcpwriter(const void *response, size_t rsp_size)
+static int tcpwriter(const void *response, size_t rsp_size)
 {
     assert(ref_sockfd >=0); 
     write(ref_sockfd, (char *)response, rsp_size);
@@ -55,7 +55,7 @@ void processMessagesLoop(PoMA_TCP_SPEC *spec, Topic *topicsHead)
     close(spec->session_sockfd);
 }
 
-void tcpClientsLoopHandler(PoMA_TCP_SPEC *spec, Topic *topicsHead)
+static void tcpClientsLoopHandler(PoMA_TCP_SPEC *spec, Topic *topicsHead)
 {
     socklen_t clilen;
     

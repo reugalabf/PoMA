@@ -19,12 +19,12 @@ typedef struct PoMA_TCP_SPEC
     void (*processClientsLoop)(struct PoMA_TCP_SPEC *spec, Topic *topicsHead);
 } PoMA_TCP_SPEC;
 
-void error(char *msg);
+//static void error(char *msg);
 
-int tcpwriter(const void *response, size_t rsp_size);
+//static int tcpwriter(const void *response, size_t rsp_size);
 
 void processMessagesLoop(PoMA_TCP_SPEC *spec, Topic *topicsHead);
 
-void tcpClientsLoopHandler(PoMA_TCP_SPEC *spec, Topic *topicsHead);
+//void tcpClientsLoopHandler(PoMA_TCP_SPEC *spec, Topic *topicsHead);
 
 PoMA_TCP_SPEC *createPoMATCPConnectSpec(PoMA_TCP_SPEC *spec, int portno, int multiuser);
