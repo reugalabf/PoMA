@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -I.
+CFLAGS = -lpthread -Wall -Wextra -I.
 
 TARGET = poma_example
 BUILD_DIR = build
@@ -7,6 +7,7 @@ BUILD_DIR = build
 OBJ = \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/poma_tcpconnector.o \
+	$(BUILD_DIR)/poma_bleconnector.o \
 	$(BUILD_DIR)/poma_core.o
 
 all: $(TARGET)
@@ -19,9 +20,11 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 # Explicit header dependencies
-$(BUILD_DIR)/main.o: main.c poma_tcpconnector.h | $(BUILD_DIR)
+$(BUILD_DIR)/main.o: main.c poma_tcpconnector.h poma_bleconnector.h| $(BUILD_DIR)
 
 $(BUILD_DIR)/poma_tcpconnector.o: poma_tcpconnector.c poma_tcpconnector.h poma_core.h | $(BUILD_DIR)
+
+$(BUILD_DIR)/poma_bleconnector.o: poma_bleconnector.c poma_bleconnector.h poma_core.h | $(BUILD_DIR)
 
 $(BUILD_DIR)/poma_core.o: poma_core.c poma_core.h | $(BUILD_DIR)
 

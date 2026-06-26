@@ -6,6 +6,9 @@
 
 #include <unistd.h>
 
+#ifndef POMACORE_H
+#define POMACORE_H
+
 typedef struct Topic
 {
     char key[20];
@@ -39,3 +42,5 @@ void processSetterMessage(WRITERFUNC, char *buffer, Topic *topics);
 void processListTopics(WRITERFUNC, char *buffer, Topic *topics);
 
 int processMessage(WRITERFUNC, char *buffer, Topic *topics);
+
+#endif
