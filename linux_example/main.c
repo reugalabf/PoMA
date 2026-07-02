@@ -20,13 +20,13 @@ void setterGlobalVar(WRITERFUNC, char *argument)
 {
     if (argument != NULL)
         GlobalVar = atoi(argument);
-    writer("done\n", 6);
+    writer("done", strlen("done") );
 }
 
 void getterGlobalVar(WRITERFUNC, char *argument)
 {
     char response[10];
-    sprintf(response, "%d\n", GlobalVar);
+    sprintf(response, "%d", GlobalVar);
     writer(response, strlen(response));
 }
 
@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
     if (argc < 2)
     {
         fprintf(stderr, "ERROR, no TCP port or Bluetooth channel provided\n");
+        fprintf(stderr, "Usage: %s --tcp_port PORT | --blue_channel CHANNEL  \n", argv[0]);
         exit(1);
     }
 
@@ -103,8 +104,9 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-    printf("here ...argc %d tcp_port_idx %d\n", argc, tcp_port_idx);
+    //printf("here ...argc %d tcp_port_idx %d\n", argc, tcp_port_idx);
     /**************/
+    
     if (tcp_port_idx != -1)
     {
         tcpSpec = createPoMATCPConnectSpec(tcpSpec, atoi(argv[tcp_port_idx]), SINGLE_USER); // or MULTI_USER

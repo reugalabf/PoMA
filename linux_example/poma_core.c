@@ -1,6 +1,8 @@
 #include "poma_core.h"
 
-
+#define LIST_SEPARATOR " ! "
+#define NEW_LINE "\n"
+#define NEW_LINE_COUNT sizeof(NEW_LINE) -1
 
 void defaultSetter(WRITERFUNC, char *argument)
 {
@@ -42,7 +44,7 @@ void addTopic(Topic *topics, Topic *new_topic)
 void *findGetter(Topic *topics, char *key)
 {
     Topic *current = topics;
-
+    //printf("key %s size: %d\n", key, sizeof(key));
     if (key != NULL)
     {
         while (current != NULL)
@@ -74,21 +76,22 @@ void processGetterMessage(WRITERFUNC, char *buffer, Topic *topics)
 {
     void (*getter)(void*, char *);
     char *key;
-    char delims[3] = {' ', '\n', '\0'};
+    char delims[4] = {' ', '\n', '\r','\0' };
 
     key = strtok(buffer, delims);
 
     getter = findGetter(topics, key);
     if (getter != NULL)
         getter(writer, buffer);
+    writer( NEW_LINE, NEW_LINE_COUNT);
 }
 
 void processSetterMessage(WRITERFUNC, char *buffer, Topic *topics)
 {
     void (*setter)(void*, char *);
     char *key, *argument;
-    char delims[3] = {' ', '\n', '\0'};
-    char lineDelim[2] = {'\n'};
+    char delims[4] = {' ', '\n', '\r', '\0'};
+    char lineDelim[3] = {'\n','\r', '\0'};
 
     key = strtok(buffer, delims);
     // printf("buffer: ->%s<-", buffer);
@@ -96,6 +99,7 @@ void processSetterMessage(WRITERFUNC, char *buffer, Topic *topics)
     argument = strtok(NULL, lineDelim);
     if (setter != NULL && key != NULL)
         setter(writer, argument);
+    writer( NEW_LINE, NEW_LINE_COUNT);
 }
 
 void processListTopics(WRITERFUNC, char *buffer, Topic *topics)
@@ -105,10 +109,10 @@ void processListTopics(WRITERFUNC, char *buffer, Topic *topics)
     while (current != NULL)
     {
         writer(current->key, strlen(current->key));
-        writer( " | ", 4);
+        writer( LIST_SEPARATOR, sizeof(LIST_SEPARATOR)-1);
         current = current->next;
     }
-    writer( "\n", 2);
+    writer( NEW_LINE, NEW_LINE_COUNT);
 }
 
 int processMessage(WRITERFUNC, char *buffer, Topic *topics)
