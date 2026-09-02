@@ -23,54 +23,30 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
-#include <poma.h>
+// #include <poma.h>
+#include "poma_tcpconnector.h"
 
 #define PORT CONFIG_EXAMPLE_PORT
 
-static const char *TAG = "example";
+static const char *TAG = "ESP_POMA";
 
 int GlobalVar = 0;
 Topic *topicHead;
 
-void setterGlobalVar(int sockfd, char *argument)
+void setterGlobalVar(WRITERFUNC, char *argument)
 {
     if (argument != NULL)
         GlobalVar = atoi(argument);
-    write(sockfd, "done\n", 6);
+    writer("done", strlen("done"));
 }
 
-void getterGlobalVar(int sockfd, char *argument)
+void getterGlobalVar(WRITERFUNC, char *argument)
 {
     char response[10];
-    sprintf(response, "%d\n", GlobalVar);
-    write(sockfd, response, strlen(response));
+    sprintf(response, "%d", GlobalVar);
+    writer(response, strlen(response));
 }
 
-static void do_processQuery(const int sock)
-{
-    int len;
-    char rx_buffer[128];
-
-    do
-    {
-        len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-        if (len < 0)
-        {
-            ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
-        }
-        else if (len == 1)
-        {
-            ESP_LOGW(TAG, "Connection closed");
-        }
-        else
-        {
-            rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
-            ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
-
-            processMessage(sock, rx_buffer, topicHead);
-        }
-    } while (len > 0);
-}
 
 static void tcp_server_task(void *pvParameters)
 {
@@ -78,7 +54,10 @@ static void tcp_server_task(void *pvParameters)
     int addr_family = (int)pvParameters;
     int ip_protocol = 0;
     struct sockaddr_in6 dest_addr;
+    PoMA_TCP_SPEC *tcp_spec = (PoMA_TCP_SPEC *)pvParameters;
 
+    tcp_spec->processClientsLoop(tcp_spec, topicHead);
+/*
     if (addr_family == AF_INET)
     {
         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
@@ -162,7 +141,7 @@ static void tcp_server_task(void *pvParameters)
 
 CLEAN_UP:
     close(listen_sock);
-    vTaskDelete(NULL);
+    vTaskDelete(NULL);*/
 }
 
 void app_main(void)
@@ -177,13 +156,22 @@ void app_main(void)
      */
     ESP_ERROR_CHECK(example_connect());
 
+    ESP_LOGE(TAG, "before createTopic");
     topicHead = createTopic("GlobalVar", getterGlobalVar, setterGlobalVar);
-    addTopic(topicHead, createTopic("g_var", getterGlobalVar, setterGlobalVar));
+    ESP_LOGE(TAG, "head topic %s", topicHead->key );
+    ESP_LOGE(TAG, "before addTopic");
+    Topic* newTopic = createTopic("g_var", getterGlobalVar, setterGlobalVar);
+    ESP_LOGE(TAG, "new topic %s", newTopic->key );
+    addTopic(topicHead, newTopic);
+    ESP_LOGE(TAG, "before malloc");
+    PoMA_TCP_SPEC *tcpSpec = malloc(sizeof(PoMA_TCP_SPEC));
+    ESP_LOGE(TAG, "createPoMATCPConnection");
 
-#ifdef CONFIG_EXAMPLE_IPV4
-    xTaskCreate(tcp_server_task, "tcp_server", 4096, (void *)AF_INET, 5, NULL);
-#endif
-#ifdef CONFIG_EXAMPLE_IPV6
-    xTaskCreate(tcp_server_task, "tcp_server", 4096, (void *)AF_INET6, 5, NULL);
-#endif
+    tcpSpec = createPoMATCPConnectSpec(tcpSpec, PORT, SINGLE_USER); // or MULTI_USER
+//#ifdef CONFIG_EXAMPLE_IPV4
+    xTaskCreate(tcp_server_task, "tcp_server", 4096*5, (void *)tcpSpec, 5, NULL);
+//#endif
+//#ifdef CONFIG_EXAMPLE_IPV6
+    //xTaskCreate(tcp_server_task, "tcp_server", 4096, (void *)AF_INET6, 5, NULL);
+//#endif
 }

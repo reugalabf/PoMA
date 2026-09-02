@@ -28,6 +28,7 @@ Topic *createTopic(char *newKey, void(*getter), void(*setter))
         strcpy(newTopic->key, newKey);
         newTopic->getter = getter;
         newTopic->setter = setter;
+	newTopic->next = NULL;
     }
     return newTopic;
 }
