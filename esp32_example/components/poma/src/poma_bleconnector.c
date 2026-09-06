@@ -5,15 +5,20 @@
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "host/ble_store.h"
+#include "host/util/util.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
-#include "gatt_svr.h"
+
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_log.h"
+
+
+
+#include "poma_bleconnector.h"
 
 bool is_nvs_initialized(void) {
     nvs_handle_t my_handle;
@@ -257,7 +262,8 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
     {
         return BLE_ATT_ERR_UNLIKELY;
     }
-
+    
+    rx_buf[0]= '!'; //here is the echo and call to poma_core 
     ESP_LOGI(TAG, "RX %u bytes, echoing back", (unsigned)out_len);
     poma_send_fragments(rx_buf, out_len);
 
@@ -298,11 +304,12 @@ static int gatt_svr_init(void)
 
     return 0;
 }
-/BLE conf************************************************************************************ */
+
+/*BLE conf************************************************************************************ */
 
 
 static void
-echo_advertise(void)
+poma_advertise(void)
 {
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
@@ -346,28 +353,28 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg)
                  event->connect.status == 0 ? "established" : "failed",
                  event->connect.status);
         if (event->connect.status == 0) {
-            echo_svc_set_conn_handle(event->connect.conn_handle, true);
+            poma_svc_set_conn_handle(event->connect.conn_handle, true);
         } else {
             /* Failed connection attempt; resume advertising (design §10 IDLE). */
-            echo_advertise();
+            poma_advertise();
         }
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
         ESP_LOGI(TAG, "disconnect; reason=%d", event->disconnect.reason);
-        echo_svc_set_conn_handle(BLE_HS_CONN_HANDLE_NONE, false);
-        echo_svc_set_subscribed(false);
-        echo_advertise();
+        poma_svc_set_conn_handle(BLE_HS_CONN_HANDLE_NONE, false);
+        poma_svc_set_subscribed(false);
+        poma_advertise();
         return 0;
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        echo_advertise();
+        poma_advertise();
         return 0;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
         ESP_LOGI(TAG, "subscribe event; attr_handle=%d cur_notify=%d",
                  event->subscribe.attr_handle, event->subscribe.cur_notify);
-        echo_svc_set_subscribed(event->subscribe.cur_notify != 0);
+        poma_svc_set_subscribed(event->subscribe.cur_notify != 0);
         return 0;
 
     case BLE_GAP_EVENT_MTU:
@@ -406,7 +413,7 @@ static void on_sync(void)
         return;
     }
 
-    echo_advertise();
+    poma_advertise();
 }
 
 static void on_reset(int reason)
@@ -421,7 +428,7 @@ static void host_task(void *param)
     nimble_port_freertos_deinit();
 }
 
-/BLE POMA********************************************************************************** */
+/*BLE POMA********************************************************************************** */
 
 static int ref_sockfd = -1;
 
@@ -430,7 +437,7 @@ static void error(char *msg)
     ESP_LOGE(TAG, "%s: errno %d (%s)", msg, errno, strerror(errno));
     vTaskDelete(NULL);
 }
-
+/*
 static int BLEwriter(const void *response, size_t rsp_size)
 {
 
@@ -438,6 +445,7 @@ static int BLEwriter(const void *response, size_t rsp_size)
     write(ref_sockfd, (char *)response, rsp_size);
     return 1;
 }
+*/
 
 
 // processMessage(&BLEwriter, buffer, topicsHead);
@@ -453,11 +461,12 @@ ble_store_config_init();
 
 PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int multiuser)
 {
-    esp_err_t ret;
+    esp_err_t ret=ESP_OK;
     int rc;
 
-    if (is_nvs_initialized()!)
+    if (is_nvs_initialized()==false)
          ret = nvs_flash_init();
+         
 
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -468,7 +477,7 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
     ret = nimble_port_init();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "failed to init nimble port; rc=%d", ret);
-        return;
+        return spec;
     }
 
     ble_hs_cfg.reset_cb = on_reset;
@@ -489,7 +498,7 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
     rc = gatt_svr_init();
     if (rc != 0) {
         ESP_LOGE(TAG, "gatt_svr_init failed; rc=%d", rc);
-        return;
+        return spec;
     }
 
     rc = ble_svc_gap_device_name_set("EchoSrv-ESP32");
@@ -498,7 +507,9 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
     }
 
     ble_store_config_init();
-    spec->own_addr_type = 0; //0 for default address. 1 for ramdom
+    //spec->own_addr_type = 0; //0 for default address. 1 for ramdom
     spec->processClientsLoop = processBLEMessagesLoop;
     return spec;
+
+
 }

@@ -61,7 +61,7 @@ static void tcp_server_task(void *pvParameters)
 
 static void ble_server_task(void *pvParameters)
 {
-    PoMA_BLE_SPEC *ble_spec = (PoMA_TCP_SPEC *)pvParameters;
+    PoMA_BLE_SPEC *ble_spec = (PoMA_BLE_SPEC *)pvParameters;
 
     ble_spec->processClientsLoop(ble_spec, topicHead);
 }
@@ -93,4 +93,5 @@ void app_main(void)
 
     bleSpec = createPoMABLEConnectSpec(bleSpec, 1, SINGLE_USER);
     // a new task is created... but nimble runds the stack on its own task. WIP    
-    xTaskCreate(ble_server_task, "ble_server", 4096 * 2, void(*) bleSpec, 5, NULL);
+    xTaskCreate(ble_server_task, "ble_server", 4096 * 2, (void *) bleSpec, 5, NULL);
+}
