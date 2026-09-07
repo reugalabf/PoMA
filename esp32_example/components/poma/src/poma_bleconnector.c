@@ -71,7 +71,7 @@ static const ble_uuid128_t poma_tx_uuid =
 static uint16_t s_tx_val_handle;
 static uint16_t s_conn_handle = BLE_HS_CONN_HANDLE_NONE;
 static bool s_subscribed = false;
-
+/*
 typedef enum
 {
     ECHO_STATE_IDLE = 0,
@@ -79,7 +79,7 @@ typedef enum
     ECHO_STATE_ERROR = 2,
 } poma_state_t;
 static volatile poma_state_t s_state = ECHO_STATE_IDLE;
-
+*/
 static int gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
                                   struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int gatt_svr_chr_access_status(uint16_t conn_handle, uint16_t attr_handle,
@@ -135,7 +135,7 @@ static void
 poma_svc_set_conn_handle(uint16_t conn_handle, bool connected)
 {
     s_conn_handle = connected ? conn_handle : BLE_HS_CONN_HANDLE_NONE;
-    s_state = ECHO_STATE_IDLE;
+    //s_state = ECHO_STATE_IDLE;
 }
 
 static void
@@ -168,7 +168,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
     if (s_conn_handle == BLE_HS_CONN_HANDLE_NONE || !s_subscribed)
     {
         ESP_LOGW(TAG, "cannot notify: no connection or client not subscribed");
-        s_state = ECHO_STATE_ERROR;
+        //s_state = ECHO_STATE_ERROR;
         return;
     }
 
@@ -176,7 +176,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
     /* usable payload = ATT_MTU - 3 (ATT op+handle header) - 1 (our seq header) */
     size_t chunk_size = (mtu > 4) ? (size_t)(mtu - 3 - 1) : 16;
 
-    s_state = ECHO_STATE_ECHOING;
+    //s_state = ECHO_STATE_ECHOING;
 
     size_t offset = 0;
     uint8_t seq = 0;
@@ -200,7 +200,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
         if (om == NULL)
         {
             ESP_LOGE(TAG, "mbuf alloc failed");
-            s_state = ECHO_STATE_ERROR;
+            //s_state = ECHO_STATE_ERROR;
             return;
         }
 
@@ -208,7 +208,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
         if (rc != 0)
         {
             ESP_LOGE(TAG, "notify failed; rc=%d", rc);
-            s_state = ECHO_STATE_ERROR;
+            //s_state = ECHO_STATE_ERROR;
             return;
         }
 
@@ -216,7 +216,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
         seq = (seq + 1) & 0x7F;
     }
 
-    s_state = ECHO_STATE_IDLE;
+    //s_state = ECHO_STATE_IDLE;
 }
 
 /* ---- TX access handler ----
@@ -271,6 +271,7 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 /* ---- Status read handler (optional, design §4.2) ---- */
+/*
 static int gatt_svr_chr_access_status(uint16_t conn_handle, uint16_t attr_handle,
                                       struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
@@ -282,6 +283,7 @@ static int gatt_svr_chr_access_status(uint16_t conn_handle, uint16_t attr_handle
     int rc = os_mbuf_append(ctxt->om, &status, sizeof(status));
     return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
+*/
 
 static int gatt_svr_init(void)
 {
