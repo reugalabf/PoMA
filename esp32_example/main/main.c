@@ -62,21 +62,22 @@ static void tcp_server_task(void *pvParameters)
 static void ble_server_task(void *pvParameters)
 {
     PoMA_BLE_SPEC *ble_spec = (PoMA_BLE_SPEC *)pvParameters;
-
+    printf("before bleSpec->processClientsLoop");
     ble_spec->processClientsLoop(ble_spec, topicHead);
+    vTaskDelete(NULL); // properly terminate the task
 }
 
 void app_main(void)
 {
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    // ESP_ERROR_CHECK(nvs_flash_init());
+    // ESP_ERROR_CHECK(esp_netif_init());
+    // ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
      */
-    ESP_ERROR_CHECK(example_connect());
+    // ESP_ERROR_CHECK(example_connect());
 
     topicHead = createTopic("GlobalVar", getterGlobalVar, setterGlobalVar);
 
@@ -84,14 +85,16 @@ void app_main(void)
 
     addTopic(topicHead, newTopic);
 
-    PoMA_TCP_SPEC *tcpSpec = malloc(sizeof(PoMA_TCP_SPEC));
+    // PoMA_TCP_SPEC *tcpSpec = malloc(sizeof(PoMA_TCP_SPEC));
 
-    tcpSpec = createPoMATCPConnectSpec(tcpSpec, PORT, SINGLE_USER); // or MULTI_USER
-    xTaskCreate(tcp_server_task, "tcp_server", 4096 * 5, (void *)tcpSpec, 5, NULL);
+    // tcpSpec = createPoMATCPConnectSpec(tcpSpec, PORT, SINGLE_USER); // or MULTI_USER
+    // xTaskCreate(tcp_server_task, "tcp_server", 4096 * 5, (void *)tcpSpec, 5, NULL);
 
     PoMA_BLE_SPEC *bleSpec = malloc(sizeof(PoMA_BLE_SPEC));
 
+    printf("before create PoMA BLE");
     bleSpec = createPoMABLEConnectSpec(bleSpec, 1, SINGLE_USER);
-    // a new task is created... but nimble runds the stack on its own task. WIP    
-    xTaskCreate(ble_server_task, "ble_server", 4096 * 2, (void *) bleSpec, 5, NULL);
+    // a new task is created... but nimble runds the stack on its own task. WIP
+
+    xTaskCreate(ble_server_task, "ble_server", 4096 * 2, (void *)bleSpec, 5, NULL);
 }

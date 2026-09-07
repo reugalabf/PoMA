@@ -16,30 +16,30 @@
 #include "nvs_flash.h"
 #include "esp_log.h"
 
-
-
 #include "poma_bleconnector.h"
 
-bool is_nvs_initialized(void) {
+bool is_nvs_initialized(void)
+{
     nvs_handle_t my_handle;
     // Attempt to open a temporary/dummy namespace in read-only mode
     esp_err_t err = nvs_open("storage", NVS_READONLY, &my_handle);
-    
-    if (err == ESP_ERR_NVS_NOT_INITIALIZED) {
+
+    if (err == ESP_ERR_NVS_NOT_INITIALIZED)
+    {
         return false;
     }
-    
-    // If it succeeded or failed for a different reason (like NOT_FOUND), 
+
+    // If it succeeded or failed for a different reason (like NOT_FOUND),
     // it means the driver itself IS initialized.
-    if (err == ESP_OK) {
+    if (err == ESP_OK)
+    {
         nvs_close(my_handle);
     }
-    
+
     return true;
 }
 
 /**GATT stuff */
-
 
 static const char *TAG = "poma_gatt";
 
@@ -225,7 +225,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
  * at registration time. A direct GATT Read against TX (rather than
  * subscribing) just returns an empty value. */
 static int gatt_svr_chr_access_tx(uint16_t conn_handle, uint16_t attr_handle,
-                       struct ble_gatt_access_ctxt *ctxt, void *arg)
+                                  struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR)
     {
@@ -262,8 +262,8 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
     {
         return BLE_ATT_ERR_UNLIKELY;
     }
-    
-    rx_buf[0]= '!'; //here is the echo and call to poma_core 
+
+    rx_buf[0] = '!'; // here is the echo and call to poma_core
     ESP_LOGI(TAG, "RX %u bytes, echoing back", (unsigned)out_len);
     poma_send_fragments(rx_buf, out_len);
 
@@ -272,7 +272,7 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
 
 /* ---- Status read handler (optional, design §4.2) ---- */
 static int gatt_svr_chr_access_status(uint16_t conn_handle, uint16_t attr_handle,
-                           struct ble_gatt_access_ctxt *ctxt, void *arg)
+                                      struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR)
     {
@@ -307,7 +307,6 @@ static int gatt_svr_init(void)
 
 /*BLE conf************************************************************************************ */
 
-
 static void
 poma_advertise(void)
 {
@@ -329,7 +328,8 @@ poma_advertise(void)
     fields.name_is_complete = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "error setting advertisement data; rc=%d", rc);
         return;
     }
@@ -339,22 +339,27 @@ poma_advertise(void)
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
 
     rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER,
-                            &adv_params, gap_event_handler, NULL);
-    if (rc != 0) {
+                           &adv_params, gap_event_handler, NULL);
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "error enabling advertisement; rc=%d", rc);
     }
 }
 
 static int gap_event_handler(struct ble_gap_event *event, void *arg)
 {
-    switch (event->type) {
+    switch (event->type)
+    {
     case BLE_GAP_EVENT_CONNECT:
         ESP_LOGI(TAG, "connection %s; status=%d",
                  event->connect.status == 0 ? "established" : "failed",
                  event->connect.status);
-        if (event->connect.status == 0) {
+        if (event->connect.status == 0)
+        {
             poma_svc_set_conn_handle(event->connect.conn_handle, true);
-        } else {
+        }
+        else
+        {
             /* Failed connection attempt; resume advertising (design §10 IDLE). */
             poma_advertise();
         }
@@ -402,13 +407,15 @@ static void on_sync(void)
     int rc;
 
     rc = ble_hs_util_ensure_addr(0);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "no address available; rc=%d", rc);
         return;
     }
 
     rc = ble_hs_id_infer_auto(0, &own_addr_type);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "error determining address type; rc=%d", rc);
         return;
     }
@@ -430,7 +437,7 @@ static void host_task(void *param)
 
 /*BLE POMA********************************************************************************** */
 
-static int ref_sockfd = -1;
+//static int ref_sockfd = -1;
 
 static void error(char *msg)
 {
@@ -447,35 +454,33 @@ static int BLEwriter(const void *response, size_t rsp_size)
 }
 */
 
-
 // processMessage(&BLEwriter, buffer, topicsHead);
 
+void processBLEMessagesLoop(PoMA_BLE_SPEC *spec, Topic *topicsHead)
+{
 
-void processBLEMessagesLoop(PoMA_BLE_SPEC *spec, Topic *topicsHead){
-
-ble_store_config_init();
-
+    ble_store_config_init();
     nimble_port_freertos_init(host_task);
-
 }
 
 PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int multiuser)
 {
-    esp_err_t ret=ESP_OK;
+    esp_err_t ret = ESP_OK;
     int rc;
 
-    if (is_nvs_initialized()==false)
-         ret = nvs_flash_init();
-         
+    if (is_nvs_initialized() == false)
+        ret = nvs_flash_init();
 
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
     ret = nimble_port_init();
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "failed to init nimble port; rc=%d", ret);
         return spec;
     }
@@ -496,20 +501,20 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
     ble_hs_cfg.sm_sc = 1;
 
     rc = gatt_svr_init();
-    if (rc != 0) {
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "gatt_svr_init failed; rc=%d", rc);
         return spec;
     }
 
-    rc = ble_svc_gap_device_name_set("EchoSrv-ESP32");
-    if (rc != 0) {
+    rc = ble_svc_gap_device_name_set("PoMA-Srv-ESP32");
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "failed to set device name; rc=%d", rc);
     }
 
     ble_store_config_init();
-    //spec->own_addr_type = 0; //0 for default address. 1 for ramdom
+    // spec->own_addr_type = 0; //0 for default address. 1 for ramdom
     spec->processClientsLoop = processBLEMessagesLoop;
     return spec;
-
-
 }
