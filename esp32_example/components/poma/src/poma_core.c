@@ -1,9 +1,7 @@
 #include "poma_core.h"
 #include "esp_log.h"
 
-#define LIST_SEPARATOR " ! "
-#define NEW_LINE "\n"
-#define NEW_LINE_COUNT sizeof(NEW_LINE) -1
+
 
 void defaultSetter(WRITERFUNC, char *argument)
 {

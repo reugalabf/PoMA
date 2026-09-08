@@ -25,6 +25,8 @@ static int gap_event_handler(struct ble_gap_event *event, void *arg);
 void ble_store_config_init(void);
 
 
+static int blewriter(const void *response, size_t rsp_size);
+static int buffered_blewriter(const void *response, size_t rsp_size);
 void processBLEMessagesLoop(PoMA_BLE_SPEC *spec, Topic *topicsHead);
 
 PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int multiuser);

@@ -18,6 +18,7 @@
 
 #include "poma_bleconnector.h"
 
+static Topic *_topicsHead;
 bool is_nvs_initialized(void)
 {
     nvs_handle_t my_handle;
@@ -135,7 +136,7 @@ static void
 poma_svc_set_conn_handle(uint16_t conn_handle, bool connected)
 {
     s_conn_handle = connected ? conn_handle : BLE_HS_CONN_HANDLE_NONE;
-    //s_state = ECHO_STATE_IDLE;
+    // s_state = ECHO_STATE_IDLE;
 }
 
 static void
@@ -163,12 +164,12 @@ poma_svc_get_mtu(void)
  * the controller, so this header is for the client's own bookkeeping
  * (detecting an unexpected gap) rather than reordering.
  */
-static void poma_send_fragments(const uint8_t *data, size_t len)
+static void poma_send_fragments(const char *data, size_t len)
 {
     if (s_conn_handle == BLE_HS_CONN_HANDLE_NONE || !s_subscribed)
     {
         ESP_LOGW(TAG, "cannot notify: no connection or client not subscribed");
-        //s_state = ECHO_STATE_ERROR;
+        // s_state = ECHO_STATE_ERROR;
         return;
     }
 
@@ -176,7 +177,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
     /* usable payload = ATT_MTU - 3 (ATT op+handle header) - 1 (our seq header) */
     size_t chunk_size = (mtu > 4) ? (size_t)(mtu - 3 - 1) : 16;
 
-    //s_state = ECHO_STATE_ECHOING;
+    // s_state = ECHO_STATE_ECHOING;
 
     size_t offset = 0;
     uint8_t seq = 0;
@@ -200,7 +201,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
         if (om == NULL)
         {
             ESP_LOGE(TAG, "mbuf alloc failed");
-            //s_state = ECHO_STATE_ERROR;
+            // s_state = ECHO_STATE_ERROR;
             return;
         }
 
@@ -208,7 +209,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
         if (rc != 0)
         {
             ESP_LOGE(TAG, "notify failed; rc=%d", rc);
-            //s_state = ECHO_STATE_ERROR;
+            // s_state = ECHO_STATE_ERROR;
             return;
         }
 
@@ -216,7 +217,7 @@ static void poma_send_fragments(const uint8_t *data, size_t len)
         seq = (seq + 1) & 0x7F;
     }
 
-    //s_state = ECHO_STATE_IDLE;
+    // s_state = ECHO_STATE_IDLE;
 }
 
 /* ---- TX access handler ----
@@ -255,17 +256,16 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
 
-    static uint8_t rx_buf[POMA_MAX_PAYLOAD];
+    static char rx_buf[POMA_MAX_PAYLOAD];
     uint16_t out_len = 0;
     int rc = ble_hs_mbuf_to_flat(ctxt->om, rx_buf, sizeof(rx_buf), &out_len);
     if (rc != 0)
     {
         return BLE_ATT_ERR_UNLIKELY;
     }
+    printf("rx_buf %s out_len: %d \n", rx_buf, out_len);
 
-    rx_buf[0] = '!'; // here is the echo and call to poma_core
-    ESP_LOGI(TAG, "RX %u bytes, echoing back", (unsigned)out_len);
-    poma_send_fragments(rx_buf, out_len);
+    processMessage(&buffered_blewriter, rx_buf, _topicsHead);
 
     return 0;
 }
@@ -439,28 +439,53 @@ static void host_task(void *param)
 
 /*BLE POMA********************************************************************************** */
 
-//static int ref_sockfd = -1;
+// static int ref_sockfd = -1;
 
 static void error(char *msg)
 {
     ESP_LOGE(TAG, "%s: errno %d (%s)", msg, errno, strerror(errno));
     vTaskDelete(NULL);
 }
-/*
-static int BLEwriter(const void *response, size_t rsp_size)
-{
 
-    assert(ref_sockfd >= 0);
-    write(ref_sockfd, (char *)response, rsp_size);
+static int blewriter(const void *response, size_t rsp_size)
+{
+    if (((char *)response)[rsp_size - 1] == '\n')
+        ESP_LOGI(TAG, "Response: NEW_LINE ");
+    else
+    {
+        ESP_LOGI(TAG, "Response: %s ", (char *)response);
+        ESP_LOGI(TAG, "RX %u bytes, echoing back", (unsigned)rsp_size);
+        poma_send_fragments(response, rsp_size);
+    }
     return 1;
 }
-*/
 
-// processMessage(&BLEwriter, buffer, topicsHead);
+static int buffered_blewriter(const void *response, size_t rsp_size)
+{
+
+    static char buffer[POMA_MAX_PAYLOAD];
+    static int idx = 0;
+
+    snprintf(buffer + idx, POMA_MAX_PAYLOAD, "%s", (char *)response);
+    idx += rsp_size;
+
+    if (((char *)response)[rsp_size - 1] == '\n')
+    {
+        ESP_LOGI(TAG, "Response: %s ", (char *)buffer);
+        ESP_LOGI(TAG, "RX %u bytes, echoing back", strlen(buffer));
+        poma_send_fragments(buffer, strlen(buffer));
+        idx = 0;
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Buffering: %s : %u ", (char *)response, rsp_size);
+    }
+    return 1;
+}
 
 void processBLEMessagesLoop(PoMA_BLE_SPEC *spec, Topic *topicsHead)
 {
-
+    _topicsHead = topicsHead;
     ble_store_config_init();
     nimble_port_freertos_init(host_task);
 }
