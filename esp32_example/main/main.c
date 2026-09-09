@@ -29,7 +29,7 @@
 
 #define PORT CONFIG_EXAMPLE_PORT
 
-static const char *TAG = "ESP_POMA";
+//static const char *TAG = "ESP_POMA";
 
 int GlobalVar = 0;
 Topic *topicHead;

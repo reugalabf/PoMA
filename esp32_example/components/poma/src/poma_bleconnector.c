@@ -19,6 +19,13 @@
 #include "poma_bleconnector.h"
 
 static Topic *_topicsHead;
+
+static uint8_t own_addr_type;
+static int gap_event_handler(struct ble_gap_event *event, void *arg);
+
+static int blewriter(const void *response, size_t rsp_size);
+static int buffered_blewriter(const void *response, size_t rsp_size);
+
 bool is_nvs_initialized(void)
 {
     nvs_handle_t my_handle;
@@ -83,8 +90,9 @@ static volatile poma_state_t s_state = ECHO_STATE_IDLE;
 */
 static int gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
                                   struct ble_gatt_access_ctxt *ctxt, void *arg);
-static int gatt_svr_chr_access_status(uint16_t conn_handle, uint16_t attr_handle,
-                                      struct ble_gatt_access_ctxt *ctxt, void *arg);
+/*static int gatt_svr_chr_access_status(uint16_t conn_handle, uint16_t attr_handle,
+                                      struct ble_gatt_access_ctxt *ctxt, void *arg);*/
+
 static int gatt_svr_chr_access_tx(uint16_t conn_handle, uint16_t attr_handle,
                                   struct ble_gatt_access_ctxt *ctxt, void *arg);
 
@@ -252,17 +260,19 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
     }
     if (om_len > POMA_MAX_PAYLOAD)
     {
-        /* design §9: reject oversize writes explicitly */
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
 
-    static char rx_buf[POMA_MAX_PAYLOAD];
+    char rx_buf[POMA_MAX_PAYLOAD + 1];   /* +1 for null terminator, no more static */
     uint16_t out_len = 0;
-    int rc = ble_hs_mbuf_to_flat(ctxt->om, rx_buf, sizeof(rx_buf), &out_len);
+
+    int rc = ble_hs_mbuf_to_flat(ctxt->om, rx_buf, POMA_MAX_PAYLOAD, &out_len);
     if (rc != 0)
     {
         return BLE_ATT_ERR_UNLIKELY;
     }
+    rx_buf[out_len] = '\0';   /* now safe as a C string */
+
     printf("rx_buf %s out_len: %d \n", rx_buf, out_len);
 
     processMessage(&buffered_blewriter, rx_buf, _topicsHead);
@@ -466,19 +476,26 @@ static int buffered_blewriter(const void *response, size_t rsp_size)
     static char buffer[POMA_MAX_PAYLOAD];
     static int idx = 0;
 
-    snprintf(buffer + idx, POMA_MAX_PAYLOAD, "%s", (char *)response);
-    idx += rsp_size;
-
     if (((char *)response)[rsp_size - 1] == '\n')
     {
-        ESP_LOGI(TAG, "Response: %s ", (char *)buffer);
+        ESP_LOGI(TAG, "Response: >%s< ", (char *)buffer);
         ESP_LOGI(TAG, "RX %u bytes, echoing back", strlen(buffer));
         poma_send_fragments(buffer, strlen(buffer));
         idx = 0;
     }
     else
     {
-        ESP_LOGI(TAG, "Buffering: %s : %u ", (char *)response, rsp_size);
+        if (idx + rsp_size <= POMA_MAX_PAYLOAD)
+        {
+            sprintf(buffer + idx, "%s", (char *)response);
+            idx += rsp_size;
+            ESP_LOGI(TAG, "Buffering: >%s< : %u ", (char *)response, rsp_size);
+            ESP_LOGI(TAG, "Buffer: >%s< : %u ", (char *)buffer, strlen(buffer));
+        }
+        else
+        {
+            ESP_LOGI(TAG, "buffered_blewriter OVERFLOW Response: >%s< : %u ", (char *)response, rsp_size);
+        }
     }
     return 1;
 }

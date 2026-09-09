@@ -11,7 +11,7 @@
 #ifndef POMACORE_H
 #define POMACORE_H
 
-#define LIST_SEPARATOR " ! "
+#define LIST_SEPARATOR " | "
 #define NEW_LINE "\n"
 #define NEW_LINE_COUNT sizeof(NEW_LINE) -1
 
