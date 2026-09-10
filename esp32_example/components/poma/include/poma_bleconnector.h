@@ -15,7 +15,7 @@ typedef struct PoMA_BLE_SPEC
 
     //uint8_t own_addr_type;;
     //int multi_user;
-    char device_name[249]; //ble max device name but practical adverticement is 30
+    char device_name[30]; //ble max device name [248] but practical adverticement is 30
     void (*processClientsLoop)(struct PoMA_BLE_SPEC *spec, Topic *topicsHead);
 } PoMA_BLE_SPEC;
 

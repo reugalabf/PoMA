@@ -511,6 +511,7 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
 {
     esp_err_t ret = ESP_OK;
     int rc;
+    int name_size;
 
     if (is_nvs_initialized() == false)
         ret = nvs_flash_init();
@@ -550,8 +551,14 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
         ESP_LOGE(TAG, "gatt_svr_init failed; rc=%d", rc);
         return spec;
     }
-    if (strlen(spec->device_name) == 0)
-        rc = ble_svc_gap_device_name_set("PoMA-BLE-ESP32");
+
+    //248 is the max size...'\0' at the end helps it check if device_name was set
+    spec->device_name[29] = '\0'; 
+    name_size = strlen(spec->device_name);
+    printf("name_size %d \n", name_size);
+
+    if ( name_size >=29)
+        rc = ble_svc_gap_device_name_set("PoMA-BLE");
     else
     {
         rc = ble_svc_gap_device_name_set((const char *)spec->device_name);
