@@ -263,7 +263,7 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
 
-    char rx_buf[POMA_MAX_PAYLOAD + 1];   /* +1 for null terminator, no more static */
+    char rx_buf[POMA_MAX_PAYLOAD + 1]; /* +1 for null terminator, no more static */
     uint16_t out_len = 0;
 
     int rc = ble_hs_mbuf_to_flat(ctxt->om, rx_buf, POMA_MAX_PAYLOAD, &out_len);
@@ -271,7 +271,7 @@ gatt_svr_chr_access_rx(uint16_t conn_handle, uint16_t attr_handle,
     {
         return BLE_ATT_ERR_UNLIKELY;
     }
-    rx_buf[out_len] = '\0';   /* now safe as a C string */
+    rx_buf[out_len] = '\0'; /* now safe as a C string */
 
     printf("rx_buf %s out_len: %d \n", rx_buf, out_len);
 
@@ -550,8 +550,13 @@ PoMA_BLE_SPEC *createPoMABLEConnectSpec(PoMA_BLE_SPEC *spec, uint8_t portno, int
         ESP_LOGE(TAG, "gatt_svr_init failed; rc=%d", rc);
         return spec;
     }
+    if (strlen(spec->device_name) == 0)
+        rc = ble_svc_gap_device_name_set("PoMA-BLE-ESP32");
+    else
+    {
+        rc = ble_svc_gap_device_name_set((const char *)spec->device_name);
+    }
 
-    rc = ble_svc_gap_device_name_set("PoMA-Srv-ESP32");
     if (rc != 0)
     {
         ESP_LOGE(TAG, "failed to set device name; rc=%d", rc);

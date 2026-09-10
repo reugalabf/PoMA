@@ -11,10 +11,11 @@
 
 typedef struct PoMA_BLE_SPEC
 {
-    int running;
+    //int running;
+
     //uint8_t own_addr_type;;
-    int multi_user;
-    
+    //int multi_user;
+    char device_name[249]; //ble max device name but practical adverticement is 30
     void (*processClientsLoop)(struct PoMA_BLE_SPEC *spec, Topic *topicsHead);
 } PoMA_BLE_SPEC;
 

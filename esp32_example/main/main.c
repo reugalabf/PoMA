@@ -91,7 +91,8 @@ void app_main(void)
     // xTaskCreate(tcp_server_task, "tcp_server", 4096 * 5, (void *)tcpSpec, 5, NULL);
 
     PoMA_BLE_SPEC *bleSpec = malloc(sizeof(PoMA_BLE_SPEC));
-
+    strcpy(bleSpec->device_name,"PoMA_BLE");
+    
     printf("before create PoMA BLE");
     bleSpec = createPoMABLEConnectSpec(bleSpec, 1, SINGLE_USER);
     // a new task is created... but nimble runds the stack on its own task. WIP
