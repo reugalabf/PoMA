@@ -7,7 +7,7 @@ BUILD_DIR = build
 OBJ = \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/poma_tcpconnector.o \
-	$(BUILD_DIR)/poma_bleconnector.o \
+	$(BUILD_DIR)/poma_btconnector.o \
 	$(BUILD_DIR)/poma_core.o
 
 all: $(TARGET)
@@ -20,11 +20,11 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 # Explicit header dependencies
-$(BUILD_DIR)/main.o: main.c poma_tcpconnector.h poma_bleconnector.h| $(BUILD_DIR)
+$(BUILD_DIR)/main.o: main.c poma_tcpconnector.h poma_btconnector.h| $(BUILD_DIR)
 
 $(BUILD_DIR)/poma_tcpconnector.o: poma_tcpconnector.c poma_tcpconnector.h poma_core.h | $(BUILD_DIR)
 
-$(BUILD_DIR)/poma_bleconnector.o: poma_bleconnector.c poma_bleconnector.h poma_core.h | $(BUILD_DIR)
+$(BUILD_DIR)/poma_btconnector.o: poma_btconnector.c poma_btconnector.h poma_core.h | $(BUILD_DIR)
 
 $(BUILD_DIR)/poma_core.o: poma_core.c poma_core.h | $(BUILD_DIR)
 

@@ -1,4 +1,4 @@
-# PoMa Example
+# PoMa Linux Example
 
 The example has two Topics: GlobalVar and g_var. These two topics share the same setter and getter callbacks which in turn access the global varialbe *GlobalVar*
 
