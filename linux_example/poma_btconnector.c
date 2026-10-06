@@ -3,7 +3,7 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 
-#include "poma_bleconnector.h"
+#include "poma_btconnector.h"
 #include <errno.h>
 
 static int ref_sockfd = -1;

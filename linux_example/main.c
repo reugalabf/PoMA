@@ -2,7 +2,7 @@
    The port number is passed as an argument */
 
 #include "poma_tcpconnector.h"
-#include "poma_bleconnector.h"
+#include "poma_btconnector.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     {
         tcpSpec = createPoMATCPConnectSpec(tcpSpec, atoi(argv[tcp_port_idx]), SINGLE_USER); // or MULTI_USER
         thread_spec.tcp_spec = tcpSpec;
-        if (spawn1 = pthread_create(&t1, NULL, tcp_thread, &thread_spec) != 0)
+        if ((spawn1 = pthread_create(&t1, NULL, tcp_thread, &thread_spec)) != 0)
         {
             perror("Failed to create PoMA TCP thread ");
             return -1;
@@ -122,14 +122,14 @@ int main(int argc, char *argv[])
     {
         btSpec = createPoMABLEConnectSpec(btSpec, atoi(argv[blue_channel_idx]), SINGLE_USER); // or MULTI_USER
         thread_spec.blue_spec = btSpec;
-        if (spawn2 = pthread_create(&t2, NULL, blue_thread, &thread_spec) != 0)
+        if ((spawn2 = pthread_create(&t2, NULL, blue_thread, &thread_spec)) != 0)
         {
             perror("Failed to create PoMA Bluetooth thread ");
             return -1;
         }
     }
 
-    spawn1 == 0 && pthread_join(t1, NULL);
-    spawn2 == 0 && pthread_join(t2, NULL);
+    (spawn1 == 0) && pthread_join(t1, NULL);
+    (spawn2 == 0) && pthread_join(t2, NULL);
     return 0;
 }
